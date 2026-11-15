@@ -1520,7 +1520,7 @@ func (m *modelScheduler) pickReadyAtPriorityLocked(preferWebsocket bool, priorit
 	var picked *scheduledAuth
 	switch strategy {
 	case schedulerStrategyFillFirst:
-		picked = view.pickFirst(predicate)
+		picked = view.pickSoonestReset(predicate, time.Now())
 	case schedulerStrategyWeightedRoundRobin:
 		picked = view.pickWeighted(predicate)
 	default:

@@ -89,9 +89,10 @@ func weightedSelectorStateModel(ctx context.Context, availabilityModel string) s
 	return availabilityModel
 }
 
-// FillFirstSelector selects the first available credential (deterministic ordering).
-// This "burns" one account before moving to the next, which can help stagger
-// rolling-window subscription caps (e.g. chat message limits).
+// FillFirstSelector selects the available credential whose quota window resets
+// soonest, then falls back to deterministic ID order. This "burns" the account
+// that will get its quota back first before touching accounts with more time
+// left, so no window resets with quota unused. See authQuotaResetAt.
 type FillFirstSelector struct{}
 
 type blockReason int
@@ -1239,7 +1240,7 @@ func (s *FillFirstSelector) Pick(ctx context.Context, provider, model string, op
 		return nil, err
 	}
 	available = preferCodexWebsocketAuths(ctx, provider, available)
-	return available[0], nil
+	return soonestResetAuth(available, now), nil
 }
 
 // IsAuthAvailableForModel reports whether auth is eligible for selection on model at now.
